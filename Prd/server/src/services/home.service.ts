@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { SAMPLE_EVENTS } from '../data/sample';
 import { SermonsService } from './sermons.service';
 import { NewsService } from './news.service';
 import { CommunitiesService } from './communities.service';
+import { EventsService } from './events.service';
+import { AdsService } from './ads.service';
 
 @Injectable()
 export class HomeService {
@@ -10,12 +11,14 @@ export class HomeService {
     private readonly sermons: SermonsService,
     private readonly news: NewsService,
     private readonly communities: CommunitiesService,
+    private readonly events: EventsService,
+    private readonly ads: AdsService,
   ) {}
 
   getHome() {
     const latestSermons = this.sermons.list({ limit: 5, cursor: undefined }).items;
     const latestNews = this.news.list({ limit: 3, cursor: undefined }).items;
-    const upcomingEvents = SAMPLE_EVENTS.slice(0, 3);
+    const upcomingEvents = this.events.list({ limit: 3, cursor: undefined }).items;
     const communityShortcut = {
       label: '가까운 커뮤니티 찾기',
       deeplink: 'app://communities',
@@ -30,7 +33,7 @@ export class HomeService {
       latestNews,
       upcomingEvents,
       communityShortcut,
-      adSlot: { placement: 'home_bottom', creativeId: 'stub-ad-001' },
+      adSlot: this.ads.getSlots('home')[0] ?? null,
     };
   }
 }

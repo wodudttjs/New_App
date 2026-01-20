@@ -67,4 +67,39 @@ describe('API E2E', () => {
     expect(res.body).toHaveProperty('upcomingEvents');
     expect(res.body).toHaveProperty('adSlot');
   });
+
+  it('/events list filters by region', async () => {
+    const res = await request(app.getHttpServer()).get('/events?region=KR-11').expect(200);
+    expect(res.body.items.length).toBeGreaterThan(0);
+    expect(res.body.items.every((item: any) => item.regionCode.startsWith('KR-11'))).toBe(true);
+  });
+
+  it('/events detail returns 404 for missing', async () => {
+    await request(app.getHttpServer()).get('/events/not-exist').expect(404);
+  });
+
+  it('/search returns mixed results', async () => {
+    const res = await request(app.getHttpServer())
+      .get(`/search?q=${encodeURIComponent('평화')}`)
+      .expect(200);
+    expect(Array.isArray(res.body.items)).toBe(true);
+  });
+
+  it('/push register and subscribe', async () => {
+    await request(app.getHttpServer())
+      .post('/push/register')
+      .send({ deviceId: 'dev1', platform: 'ios', token: 'fcm-token', locale: 'ko-KR' })
+      .expect(201);
+
+    const res = await request(app.getHttpServer())
+      .post('/push/subscriptions')
+      .send({ deviceId: 'dev1', topics: { sermon: true, notice: false } })
+      .expect(201);
+    expect(res.body.topics.sermon).toBe(true);
+  });
+
+  it('/ads/slots returns slots for home', async () => {
+    const res = await request(app.getHttpServer()).get('/ads/slots?screen=home').expect(200);
+    expect(res.body.slots.length).toBeGreaterThan(0);
+  });
 });
